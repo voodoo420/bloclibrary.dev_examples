@@ -1,136 +1,107 @@
+import 'package:blocexample1/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'bloc/bloc.dart';
-import 'ticker.dart';
-import 'widget/background.dart';
 
-void main() => runApp(MyApp());
+import 'authentication_bloc/authentication_bloc.dart';
+import 'authentication_bloc/authentication_event.dart';
+import 'authentication_bloc/authentication_state.dart';
+import 'login/login_screen.dart';
 
-class MyApp extends StatelessWidget {
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  BlocSupervisor.delegate = SimpleBlocDelegate();
+  final UserRepository userRepository = UserRepository();
+  runApp(
+    BlocProvider(
+      create: (context) => AuthenticationBloc(userRepository: userRepository)
+        ..add(AuthenticationStarted()),
+      child: App(userRepository: userRepository),
+    ),
+  );
+}
+
+class App extends StatelessWidget {
+  final UserRepository _userRepository;
+
+  App({Key key, @required UserRepository userRepository})
+      : assert(userRepository != null),
+        _userRepository = userRepository,
+        super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(
-        primaryColor: Color.fromRGBO(109, 234, 255, 1),
-        accentColor: Color.fromRGBO(72, 74, 126, 1),
-        brightness: Brightness.dark,
-      ),
-      title: 'Flutter Timer',
-      home: BlocProvider(
-        create: (context) => TimerBloc(ticker: Ticker()),
-        child: Timer(),
+      home: BlocBuilder<AuthenticationBloc, AuthenticationState>(
+        builder: (context, state) {
+          if (state is AuthenticationFailure) {
+            return LoginScreen(userRepository: _userRepository);
+          }
+          if (state is AuthenticationSuccess) {
+            return HomeScreen(name: state.displayName);
+          }
+          return SplashScreen();
+        },
       ),
     );
   }
 }
 
-class Timer extends StatelessWidget {
-  static const TextStyle timerTextStyle = TextStyle(
-    fontSize: 60,
-    fontWeight: FontWeight.bold,
-  );
+class SimpleBlocDelegate extends BlocDelegate {
+  @override
+  void onEvent(Bloc bloc, Object event) {
+    print(event);
+    super.onEvent(bloc, event);
+  }
+
+  @override
+  void onError(Bloc bloc, Object error, StackTrace stackTrace) {
+    print(error);
+    super.onError(bloc, error, stackTrace);
+  }
+
+  @override
+  void onTransition(Bloc bloc, Transition transition) {
+    print(transition);
+    super.onTransition(bloc, transition);
+  }
+}
+
+class SplashScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(child: Text('Splash Screen')),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  final String name;
+
+  HomeScreen({Key key, @required this.name}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Flutter Timer')),
-      body: Stack(
-        children: [
-          Background(),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.symmetric(vertical: 100.0),
-                child: Center(
-                  child: BlocBuilder<TimerBloc, TimerState>(
-                    builder: (context, state) {
-                      final String minutesStr = ((state.duration / 60) % 60)
-                          .floor()
-                          .toString()
-                          .padLeft(2, '0');
-                      final String secondsStr = (state.duration % 60)
-                          .floor()
-                          .toString()
-                          .padLeft(2, '0');
-                      return Text(
-                        '$minutesStr:$secondsStr',
-                        style: Timer.timerTextStyle,
-                      );
-                    },
-                  ),
-                ),
-              ),
-              BlocBuilder<TimerBloc, TimerState>(
-                condition: (previousState, currentState) =>
-                currentState.runtimeType != previousState.runtimeType,
-                builder: (context, state) => Actions(),
-              ),
-            ],
-          ),
+      appBar: AppBar(
+        title: Text('Home'),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.exit_to_app),
+            onPressed: () {
+              BlocProvider.of<AuthenticationBloc>(context).add(
+                AuthenticationLoggedOut(),
+              );
+            },
+          )
+        ],
+      ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: <Widget>[
+          Center(child: Text('Welcome $name!')),
         ],
       ),
     );
-  }
-}
-
-class Actions extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: _mapStateToActionButtons(
-        timerBloc: BlocProvider.of<TimerBloc>(context),
-      ),
-    );
-  }
-
-  List<Widget> _mapStateToActionButtons({
-    TimerBloc timerBloc,
-  }) {
-    final TimerState currentState = timerBloc.state;
-    if (currentState is TimerInitial) {
-      return [
-        FloatingActionButton(
-          child: Icon(Icons.play_arrow),
-          onPressed: () =>
-              timerBloc.add(TimerStarted(duration: currentState.duration)),
-        ),
-      ];
-    }
-    if (currentState is TimerRunInProgress) {
-      return [
-        FloatingActionButton(
-          child: Icon(Icons.pause),
-          onPressed: () => timerBloc.add(TimerPaused()),
-        ),
-        FloatingActionButton(
-          child: Icon(Icons.replay),
-          onPressed: () => timerBloc.add(TimerReset()),
-        ),
-      ];
-    }
-    if (currentState is TimerRunPause) {
-      return [
-        FloatingActionButton(
-          child: Icon(Icons.play_arrow),
-          onPressed: () => timerBloc.add(TimerResumed()),
-        ),
-        FloatingActionButton(
-          child: Icon(Icons.replay),
-          onPressed: () => timerBloc.add(TimerReset()),
-        ),
-      ];
-    }
-    if (currentState is TimerRunComplete) {
-      return [
-        FloatingActionButton(
-          child: Icon(Icons.replay),
-          onPressed: () => timerBloc.add(TimerReset()),
-        ),
-      ];
-    }
-    return [];
   }
 }

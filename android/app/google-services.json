@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "614135732020",
+    "firebase_url": "https://login-screen-c4ab1.firebaseio.com",
+    "project_id": "login-screen-c4ab1",
+    "storage_bucket": "login-screen-c4ab1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:614135732020:android:06d827403f3ddd76333761",
+        "android_client_info": {
+          "package_name": "ru.voodoo420.blocexample1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "614135732020-kpdmtjq2t9r9fij13h13fr36m8d021u4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdsAXnbiwlmJggeSmzzWTfI5ApX999yng"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "614135732020-kpdmtjq2t9r9fij13h13fr36m8d021u4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
